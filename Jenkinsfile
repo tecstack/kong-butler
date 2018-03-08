@@ -6,10 +6,12 @@ pipeline {
     
   }
   stages {
-    stage('code download') {
+    stage('env init') {
       steps {
-        git(changelog: true, url: 'git@192.168.182. 51:promise/promise-bulter.git', branch: 'dev', poll: true, credentialsId: 'FNvGHXQu3t2Wik3fgcXL')
-        waitUntil()
+        sh '''git clone http://192.168.182.51/promise/promise-bulter.git /apps/svr/promise-bulter
+cp /apps/svr/promise-bulker/env.conf/my.cnf /etc/
+chmod 0644 /etc/my.cnf
+pip install -r /apps/svr/promise-bulker/requirements.txt'''
       }
     }
   }
