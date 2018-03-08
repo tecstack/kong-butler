@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image '192.168.182.52:5000/promise-base'
+      image '040cc907981c'
     }
     
   }
