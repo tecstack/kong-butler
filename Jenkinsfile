@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image '040cc907981c'
+      image 'promise-back'
     }
     
   }
