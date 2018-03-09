@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('env init') {
       steps {
-        sh 'docker run -it -d --name=promise-bulker-dev-ci --hostname=promise-bulker-dev-ci -v /etc/localtime:/etc/localtime:ro -e "PYTHONPATH=/apps/svr/promise-bulker" promise-base:v1.0 /usr/sbin/init'
+        sh 'docker run -it -d --name=promise-bulter-dev-ci --hostname=promise-bulter-dev-ci -v /etc/localtime:/etc/localtime:ro -e "PYTHONPATH=/apps/svr/promise-bulter" promise-base:v1.0 /usr/sbin/init'
         sh '''docker exec promise-bulter-dev-ci git clone http://192.168.182.51/promise/promise-bulter.git /apps/svr/promise-bulter
 docker exec promise-bulter-dev-ci cp /apps/svr/promise-bulter/env.conf/my.cnf /etc/
 docker exec promise-bulter-dev-ci chmod 0644 /etc/my.cnf
