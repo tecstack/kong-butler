@@ -1,5 +1,10 @@
 pipeline {
-  agent none
+  agent {
+    node {
+      label 'master'
+    }
+    
+  }
   stages {
     stage('env init') {
       steps {
