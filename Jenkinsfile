@@ -39,6 +39,7 @@ docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml $WORKSPACE
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml $WORKSPACE'''
         junit '*.xml'
+        echo '$WORKSPACE'
       }
     }
   }
