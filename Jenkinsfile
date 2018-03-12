@@ -34,7 +34,10 @@ docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci
     }
     stage('nosetests') {
       steps {
-        sh 'docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini'
+        sh '''docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini
+docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml /apps/data/jenkins/test-results/promise-bulter-dev-ci/
+docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data/jenkins/test-results/promise-bulter-dev-ci/'''
+        junit(testResults: '/apps/data/jenkins/test-results/promise-bulter-dev-ci/nosetests.xml', allowEmptyResults: true)
       }
     }
   }
