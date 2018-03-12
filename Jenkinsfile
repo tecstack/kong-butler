@@ -32,5 +32,10 @@ docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci
 '''
       }
     }
+    stage('nosetests') {
+      steps {
+        sh 'docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini'
+      }
+    }
   }
 }
