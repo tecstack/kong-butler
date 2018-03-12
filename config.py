@@ -35,11 +35,6 @@ DEFAULT_LOGLEVEL = logging.ERROR
 # database access string setting, by default we use mysql
 # for common using
 SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/common'
-# for eater:
-SQLALCHEMY_BINDS = {
-    'eater': 'mysql://root@127.0.0.1:3306/common',
-    'spider': 'mysql://root@127.0.0.1:3306/common'
-}
 SQLALCHEMY_POOL_RECYCLE = 5
 PROPAGATE_EXCEPTIONS = True
 
