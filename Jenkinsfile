@@ -38,14 +38,13 @@ docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci
         sh '''docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml $WORKSPACE
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml $WORKSPACE'''
-        junit '*.xml'
-        echo '$WORKSPACE'
       }
     }
   }
   post {
     always {
-        junit 'nosetests.xml'
+        junit '**/nosetests.xml'
+        step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
     }
   }
 }
