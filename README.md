@@ -1,5 +1,5 @@
 # Promise-bulter
-[![Build Status](http://192.168.182.52:8080/jenkins/buildStatus/icon?job=Promise-back/promise-back-dev-ci)](http://192.168.182.52:8080/jenkins/job/Promise-back/job/promise-back-dev-ci/)
+[![Build Status](http://192.168.181.1:8080/jenkins/buildStatus/icon?job=promise-bulter/dev)](http://192.168.181.1:8080/jenkins/job/promise-bulter/job/dev/)
 
 bulter是promise的系统管理模块，包含权限与认证、用户管理、用户代办三个主要功能模块
 
