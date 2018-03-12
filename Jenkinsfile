@@ -2,7 +2,7 @@ pipeline {
   agent {
     node {
       label 'master'
-      customWorkspace '/apps/svr/data/jenkins/workspace/promise-bulter-dev-ci'
+      customWorkspace '/apps/data/jenkins/workspace/promise-bulter-dev-ci'
     }
     
   }
@@ -37,7 +37,7 @@ docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci
       steps {
         sh '''docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml /apps/data/jenkins/workspace/promise-bulter-dev-ci/
-docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data/jenkins//workspace/promise-bulter-dev-ci/'''
+docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data/jenkins/workspace/promise-bulter-dev-ci/'''
       }
     }
   }
