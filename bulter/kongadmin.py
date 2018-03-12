@@ -21,4 +21,4 @@ class KongAdmin(object):
         pass
 
     def del_comsumer(user_id):
-    	pass
+        pass
