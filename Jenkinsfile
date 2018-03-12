@@ -2,6 +2,7 @@ pipeline {
   agent {
     node {
       label 'master'
+      customWorkspace '/apps/svr/data/jenkins/workspace/promise-bulter-dev-ci'
     }
     
   }
@@ -42,7 +43,7 @@ docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data
   }
   post {
     always {
-        junit '**/promise-bulter-dev-ci/nosetests.xml'
+        junit '**/nosetests.xml'
     }
   }
 }
