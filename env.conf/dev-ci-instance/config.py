@@ -3,5 +3,5 @@
 import os
 
 # for common using
-SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/bulter_dev_ci'
+SQLALCHEMY_DATABASE_URI = 'mysql://root@192.168.182.52:3306/bulter_dev_ci'
 # SQLALCHEMY_POOL_RECYCLE = 3600
