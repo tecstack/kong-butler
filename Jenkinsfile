@@ -42,7 +42,7 @@ docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data
   }
   post {
     always {
-        junit '/apps/data/jenkins/workspace/promise-bulter-dev-ci/nosetests.xml'
+        junit '**/promise-bulter-dev-ci/nosetests.xml'
     }
   }
 }
