@@ -39,11 +39,11 @@ docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml /apps/dat
 docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml /apps/data/jenkins/test-results/promise-bulter-dev-ci/'''
       }
     }
-    post {
-      always {
-          junit '/apps/data/jenkins/test-results/promise-bulter-dev-ci/nosetests.xml'
-          step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '/apps/data/jenkins/test-results/promise-bulter-dev-ci/coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
-      }
+  }
+  post {
+    always {
+        junit '/apps/data/jenkins/test-results/promise-bulter-dev-ci/nosetests.xml'
+        step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '/apps/data/jenkins/test-results/promise-bulter-dev-ci/coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
     }
   }
 }
