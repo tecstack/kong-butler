@@ -17,7 +17,7 @@ docker run -it -d --name=promise-bulter-dev-ci --hostname=promise-bulter-dev-ci 
         sh '''docker exec promise-bulter-dev-ci git clone http://192.168.182.51/promise/promise-bulter.git /apps/svr/promise-bulter
 docker exec promise-bulter-dev-ci cp /apps/svr/promise-bulter/env.conf/my.cnf /etc/
 docker exec promise-bulter-dev-ci chmod 0644 /etc/my.cnf
-docker exec promise-bulter-dev-ci cp /apps/svr/promise-bulter/env.conf/dev-ci-instance /apps/svr/promise-bulter/instance
+docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci-instance /apps/svr/promise-bulter/instance
 '''
       }
     }
