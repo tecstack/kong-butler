@@ -65,6 +65,7 @@ from flask.ext.cachecontrol import (
 flask_cache_control = FlaskCacheControl()
 flask_cache_control.init_app(app)
 
+
 @app.route('/')
 def hello_world():
     return 'Hello World!'
