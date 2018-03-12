@@ -19,3 +19,6 @@ class KongAdmin(object):
 
     def add_consumer(user_id):
         pass
+
+    def del_comsumer(user_id):
+    	pass
