@@ -46,5 +46,8 @@ docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml $WORKSPACE
       junit '**/nosetests.xml'
       step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
     }
+    success{
+      sh '''(docker stop promise-bulter-dev-ci)&&(docker rm promise-bulter-dev-ci)'''
+    }
   }
 }
