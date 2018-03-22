@@ -26,7 +26,7 @@ TMP_FOLDER = os.path.join(BASEDIR, '.tmp')
 CA_FOLDER = os.path.join(BASEDIR, '.ca')
 UPLOAD_FOLDER = os.path.join(DATA_FOLDER, 'upload')
 BACKUP_FOLDER = os.path.join(DATA_FOLDER, 'backup')
-DEFAULT_LOGLEVEL = logging.ERROR
+DEFAULT_LOGLEVEL = logging.DEBUG
 
 
 """

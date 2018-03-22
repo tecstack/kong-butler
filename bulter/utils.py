@@ -56,6 +56,9 @@ def logmsg(msg):
     return logmsg
 
 
+def logmsg_req(msg, url, method, status_code, resp_data):
+    return logmsg('%s(%s[%s]%d:%s)' % (msg, url, method, status_code, resp_data))
+
 """
     Exception: 2 basic custom Exception classes,
     1. api calling exception, means exterior error(client exception)

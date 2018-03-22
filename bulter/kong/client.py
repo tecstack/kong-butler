@@ -1,0 +1,147 @@
+# -*- coding:utf-8 -*-
+# !/usr/bin/env python
+#
+# Author: daisheng
+# Email: shawntai.ds@gmail.com
+
+import utils
+import requests
+import json
+import exceptions
+
+from requests.auth import AuthBase
+from requests.auth import HTTPBasicAuth
+
+logger = utils.logger
+
+
+APIKEY_NAME = 'promise'
+
+
+class KeyAuth(AuthBase):
+    """Attaches HTTP Key Authentication to the given Request object."""
+    def __init__(self, apikey):
+        self.apikey = apikey
+
+    def __call__(self, r):
+        r.headers[APIKEY_NAME] = self.apikey
+        return r
+
+
+class Client(object):
+    """docstring for client"""
+
+    def __init__(self, base_url, apikey=None, basic_auth=None, use_session=False, timeout=10):
+        """
+        set credential of client to Authorization of kong admin
+        :param base_url: kong admin base url
+        :param apikey: apikey auth string
+        :param basic_auth: ['username'], ['password']
+        """
+        from . import __version__
+        self.headers = {
+            'User-Agent': 'bulter-kong/' + __version__,
+            'AcceptEncoding': 'gzip, deflate',
+            'Accept': 'application/json',
+        }
+        self.base_url = base_url
+        self.auth = self._init_auth(apikey=apikey, basic_auth=basic_auth)
+        if use_session:
+            self._session = requests.Session()
+        else:
+            self._session = None
+        self.timeout = timeout
+
+    def destroy(self):
+        self.base_url = None
+        self.headers = None
+
+        if self._session is not None:
+            self._session.close()
+        self._session = None
+
+    def _init_auth(self, apikey=None, basic_auth=None):
+        """
+        set credential of client to Authorization of kong admin
+        :param apikey: apikey auth string
+        :param basic_auth: ['username'], ['password']
+        """
+        if apikey is not None:
+            return KeyAuth(apikey)
+        if basic_auth is not None:
+            return HTTPBasicAuth(basic_auth['username'], basic_auth['password'])
+        else:
+            return None
+
+    def execute(self, http_method, path, params):
+        """ Construct an API request, send it to the API, and parse the response. """
+        url = self.base_url + self.format_path(path)
+        req_params = dict()
+
+        if self.auth is not None:
+            req_params['auth'] = self.auth
+
+        if http_method in ('POST', 'PUT', 'PATCH'):
+            self.headers['content-type'] = 'application/json'
+            req_params['data'] = json.dumps(params, cls=ResourceEncoder)
+        elif http_method in ('GET', 'DELETE'):
+            req_params['params'] = params
+        else:
+            logger.error('request to %s, Wrong http_method: %s' % (url, http_method))
+            return None
+        req_params['headers'] = self.headers
+
+        # request logging
+        logger.debug("Sending %s request to: %s", http_method, url)
+        logger.debug("  headers: %s", self.headers)
+        if http_method in ('GET', 'DELETE'):
+            logger.debug("  params: %s", req_params['params'])
+        else:
+            logger.debug("  params: %s", req_params['data'])
+
+        if self._session is None:
+            resp = requests.request(http_method, url, timeout=self.timeout, **req_params)
+        else:
+            resp = self._session.request(
+                http_method, url, timeout=self.timeout, **req_params)
+        # response logging
+        logger.debug("Response received from %s", url)
+        logger.debug("  encoding=%s status:%s", resp.encoding, resp.status_code)
+        logger.debug("  content:\n%s", resp.content)
+
+        return self.parse_body(resp)
+
+    def parse_body(self, resp):
+        if resp.status_code in exceptions.error_codes:
+            message = 'kong response: status_code:%d, content:%s' % (resp.status_code, resp.content)
+            raise exceptions.error_codes[resp.status_code](message)
+
+        if resp.content and resp.content.strip():
+            try:
+                # use supplied or inferred encoding to decode the
+                # response content
+                decoded_body = resp.content.decode(resp.encoding or resp.apparent_encoding)
+                data = json.loads(decoded_body)
+                return data
+            except Exception, e:
+                logger.error('kong response body parse error: %s, content:%s' % (e, resp.content))
+                return None
+
+    @staticmethod
+    def format_path(path=None):
+        """set path into '/xx/xx/xx' format."""
+        if path is None or not isinstance(path, str) or path == '/' or len(path) == 0:
+            return ''
+        if not path[0] == '/':
+            path = '/' + path
+        if path[-1] == '/':
+            path = path[:-1]
+        return path
+
+
+class ResourceEncoder(json.JSONEncoder):
+    def default(self, o):
+        if hasattr(o, 'attributes'):
+            # handle API resources
+            return o.attributes
+        return super(ResourceEncoder, self).default(o)

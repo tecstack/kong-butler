@@ -6,6 +6,7 @@
 #
 
 import os
+import logging
 
 from flask import Flask
 
@@ -51,6 +52,7 @@ db = SQLAlchemy(app)
 
 import utils
 # init the logger obj
+app.logger.setLevel(logging.DEBUG)
 app.logger.addHandler(utils.handler)
 
 # Config for cross domain access
@@ -69,3 +71,5 @@ flask_cache_control.init_app(app)
 @app.route('/')
 def hello_world():
     return 'Hello World!'
+
+import kong
