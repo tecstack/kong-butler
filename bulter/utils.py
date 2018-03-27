@@ -13,15 +13,12 @@ import re
 import urllib3
 
 
-def genUuid(seq=None):
+def gen_uuid(seq=None):
     """
-        generate a 64Byte uuid code
-        first 32Byte: hashed timestamp string,
-        last 32Byte: hashed 'seq' string in its namespace
-        in the user package, it is used to create 'User.user_id'
+        generate a 32Byte uuid code
     """
     if seq is not None:
-        return uuid.uuid1().hex + uuid.uuid3(uuid.NAMESPACE_DNS, seq).hex
+        return uuid.uuid1().hex + uuid.uuid3(uuid.NAMESPACE_DNS, seq + uuid.uuid1().hex).hex
     return uuid.uuid1().hex + uuid.uuid3(
         uuid.NAMESPACE_DNS, uuid.uuid1().hex).hex
 

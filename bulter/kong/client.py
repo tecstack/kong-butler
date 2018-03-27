@@ -15,7 +15,7 @@ from requests.auth import HTTPBasicAuth
 logger = utils.logger
 
 
-APIKEY_NAME = 'promise'
+APIKEY_NAME = 'key'
 
 
 class KeyAuth(AuthBase):
@@ -53,9 +53,6 @@ class Client(object):
         self.timeout = timeout
 
     def destroy(self):
-        self.base_url = None
-        self.headers = None
-
         if self._session is not None:
             self._session.close()
         self._session = None
@@ -73,7 +70,7 @@ class Client(object):
         else:
             return None
 
-    def execute(self, http_method, path, params):
+    def execute(self, http_method, path, params=None, content_type='application/json'):
         """ Construct an API request, send it to the API, and parse the response. """
         url = self.base_url + self.format_path(path)
         req_params = dict()
@@ -82,8 +79,9 @@ class Client(object):
             req_params['auth'] = self.auth
 
         if http_method in ('POST', 'PUT', 'PATCH'):
-            self.headers['content-type'] = 'application/json'
-            req_params['data'] = json.dumps(params, cls=ResourceEncoder)
+            self.headers['content-type'] = content_type
+            if params is not None:
+                req_params['data'] = json.dumps(params, cls=ResourceEncoder)
         elif http_method in ('GET', 'DELETE'):
             req_params['params'] = params
         else:
@@ -94,9 +92,9 @@ class Client(object):
         # request logging
         logger.debug("Sending %s request to: %s", http_method, url)
         logger.debug("  headers: %s", self.headers)
-        if http_method in ('GET', 'DELETE'):
+        if 'params' in req_params:
             logger.debug("  params: %s", req_params['params'])
-        else:
+        if 'data' in req_params:
             logger.debug("  params: %s", req_params['data'])
 
         if self._session is None:
@@ -113,7 +111,8 @@ class Client(object):
 
     def parse_body(self, resp):
         if resp.status_code in exceptions.error_codes:
-            message = 'kong response: status_code:%d, content:%s' % (resp.status_code, resp.content)
+            message = 'kong response: %s, status_code:%d, url:%s, content:%s' % (
+                resp.request.method, resp.status_code, resp.url, resp.content)
             raise exceptions.error_codes[resp.status_code](message)
 
         if resp.content and resp.content.strip():
@@ -124,13 +123,14 @@ class Client(object):
                 data = json.loads(decoded_body)
                 return data
             except Exception, e:
-                logger.error('kong response body parse error: %s, content:%s' % (e, resp.content))
+                logger.error('kong response body parse error: %s, url:%s, content:%s' % (
+                    e, resp.url, resp.content))
                 return None
 
     @staticmethod
     def format_path(path=None):
         """set path into '/xx/xx/xx' format."""
-        if path is None or not isinstance(path, str) or path == '/' or len(path) == 0:
+        if path is None or path == '/' or len(path) == 0:
             return ''
         if not path[0] == '/':
             path = '/' + path
