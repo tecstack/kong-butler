@@ -11,14 +11,14 @@ sys.path.append('..')
 from utils import *
 import json
 import os
-from bulter.kong.client import Client, requests
-from bulter.kong.baseinf import *
+from butler.kong.client import Client, requests
+from butler.kong.baseinf import *
 from mock import Mock, patch
 
 
 class TestClient():
     """
-    test bulter.kong.client
+    test butler.kong.client
     """
     # establish db
     def set_up(self):
@@ -44,7 +44,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_client(self):
         """
-        [KONG      ]bulter.kong.client
+        [KONG      ]butler.kong.client
         """
         # test basic_auth client
         with patch.object(requests, 'request', self.mock_resp()):
@@ -63,7 +63,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_nodeinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.nodeinf
+        [KONG      ]butler.kong.baseinf.nodeinf
         """
         content = dict(version='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -77,7 +77,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_consumerinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.consumerinf
+        [KONG      ]butler.kong.baseinf.consumerinf
         """
         content = dict(id='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -89,7 +89,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_consumerinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.consumerinf
+        [KONG      ]butler.kong.baseinf.consumerinf
         """
         kong_client = Client('http://testip.com')
         cinf = ConsumerInf(kong_client)
@@ -111,7 +111,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_apiinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.apiinf
+        [KONG      ]butler.kong.baseinf.apiinf
         """
         content = dict(id='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -123,7 +123,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_plugininf(self):
         """
-        [KONG      ]bulter.kong.baseinf.plugininf
+        [KONG      ]butler.kong.baseinf.plugininf
         """
         content = dict(id='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -151,7 +151,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_aclinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.aclplugininf
+        [KONG      ]butler.kong.baseinf.aclplugininf
         """
         content = dict(id='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -168,7 +168,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_jwtinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.jwtplugininf
+        [KONG      ]butler.kong.baseinf.jwtplugininf
         """
         content = dict(id='123')
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -180,7 +180,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_groupinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.groupinf
+        [KONG      ]butler.kong.baseinf.groupinf
         """
         content = dict(data=['123'])
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -192,7 +192,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_jwtcredinf(self):
         """
-        [KONG      ]bulter.kong.baseinf.jwtcredinf
+        [KONG      ]butler.kong.baseinf.jwtcredinf
         """
         content = dict(id=['123'])
         with patch.object(requests, 'request', self.mock_resp(content=content)):
@@ -207,7 +207,7 @@ class TestClient():
     @with_setup(set_up, tear_down)
     def test_kong_baseinf_token(self):
         """
-        [KONG      ]bulter.kong.baseinf.token
+        [KONG      ]butler.kong.baseinf.token
         """
         token = JwtCredInf.token_gen(key='testkey', secret='testsecret')
         payload = JwtCredInf.token_decode(token=token, secret='testsecret')
