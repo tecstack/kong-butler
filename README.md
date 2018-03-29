@@ -1,7 +1,7 @@
-# Promise-bulter
-[![Build Status](http://192.168.181.1:8080/jenkins/buildStatus/icon?job=promise-bulter/dev)](http://192.168.181.1:8080/jenkins/job/promise-bulter/job/dev/)
+# Promise-butler
+[![Build Status](http://192.168.181.1:8080/jenkins/buildStatus/icon?job=promise-butler/dev)](http://192.168.181.1:8080/jenkins/job/promise-butler/job/dev/)
 
-bulter是promise的系统管理模块，包含权限与认证、用户管理、用户代办三个主要功能模块
+butler是promise的系统管理模块，包含权限与认证、用户管理、用户代办三个主要功能模块
 
 ## 接口列表
 
@@ -10,7 +10,7 @@ user模块：
 
 
 ## 模块索引
-* [模块索引](http://192.168.182.52:8081/bulter/)
+* [模块索引](http://192.168.182.52:8081/butler/)
 
 ## Prerequests
 
@@ -25,9 +25,9 @@ user模块：
 ### 基本用法
 
 ```bash
-$ git clone git@192.168.182.51:promise/bulter.git
+$ git clone git@192.168.182.51:promise/butler.git
 $ git branch dev
-$ cd bulter
+$ cd butler
 $ pip install -r requirements.txt
 *(OSX10.10上PIL安装失败，需执行
  ln -s /usr/local/include/freetype2 /usr/local/include/freetype；   xcode-select --install)

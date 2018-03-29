@@ -2,42 +2,42 @@ pipeline {
   agent {
     node {
       label 'master'
-      customWorkspace '/apps/data/jenkins/workspace/promise-bulter-dev-ci'
+      customWorkspace '/apps/data/jenkins/workspace/promise-butler-dev-ci'
     }
     
   }
   stages {
     stage('docker init') {
       steps {
-        sh '''if [ -n "`docker ps -a |grep promise-bulter-dev-ci`" ]; then (docker stop promise-bulter-dev-ci)&&(docker rm promise-bulter-dev-ci); fi
-docker run -it -d --name=promise-bulter-dev-ci --hostname=promise-bulter-dev-ci -v /etc/localtime:/etc/localtime:ro -e "PYTHONPATH=/apps/svr/promise-bulter" promise-base:v1.0 /usr/sbin/init'''
+        sh '''if [ -n "`docker ps -a |grep promise-butler-dev-ci`" ]; then (docker stop promise-butler-dev-ci)&&(docker rm promise-butler-dev-ci); fi
+docker run -it -d --name=promise-butler-dev-ci --hostname=promise-butler-dev-ci -v /etc/localtime:/etc/localtime:ro -e "PYTHONPATH=/apps/svr/promise-butler" promise-base:v1.0 /usr/sbin/init'''
       }
     }
     stage('file download') {
       steps {
-        sh '''docker exec promise-bulter-dev-ci git clone http://192.168.182.51/promise/promise-bulter.git /apps/svr/promise-bulter
-docker exec promise-bulter-dev-ci cp /apps/svr/promise-bulter/env.conf/my.cnf /etc/
-docker exec promise-bulter-dev-ci chmod 0644 /etc/my.cnf
-docker exec promise-bulter-dev-ci cp -r /apps/svr/promise-bulter/env.conf/dev-ci-instance /apps/svr/promise-bulter/instance
+        sh '''docker exec promise-butler-dev-ci git clone http://192.168.182.51/promise/promise-butler.git /apps/svr/promise-butler
+docker exec promise-butler-dev-ci cp /apps/svr/promise-butler/env.conf/my.cnf /etc/
+docker exec promise-butler-dev-ci chmod 0644 /etc/my.cnf
+docker exec promise-butler-dev-ci cp -r /apps/svr/promise-butler/env.conf/dev-ci-instance /apps/svr/promise-butler/instance
 '''
       }
     }
     stage('lib install') {
       steps {
-        sh 'docker exec promise-bulter-dev-ci pip install -r /apps/svr/promise-bulter/requirements.txt'
+        sh 'docker exec promise-butler-dev-ci pip install -r /apps/svr/promise-butler/requirements.txt'
       }
     }
     stage('code check') {
       steps {
-        sh '''docker exec promise-bulter-dev-ci flake8 /apps/svr/promise-bulter/bulter --config=/apps/svr/promise-bulter/tox.ini
+        sh '''docker exec promise-butler-dev-ci flake8 /apps/svr/promise-butler/butler --config=/apps/svr/promise-butler/tox.ini
 '''
       }
     }
     stage('nosetests') {
       steps {
-        sh '''docker exec promise-bulter-dev-ci nosetests -c /apps/svr/promise-bulter/nosetests.ini
-docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/nosetests.xml $WORKSPACE
-docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml $WORKSPACE'''
+        sh '''docker exec promise-butler-dev-ci nosetests -c /apps/svr/promise-butler/nosetests.ini
+docker cp promise-butler-dev-ci:/apps/svr/promise-butler/nosetests.xml $WORKSPACE
+docker cp promise-butler-dev-ci:/apps/svr/promise-butler/coverage.xml $WORKSPACE'''
       }
     }
   }
@@ -47,7 +47,7 @@ docker cp promise-bulter-dev-ci:/apps/svr/promise-bulter/coverage.xml $WORKSPACE
       step([$class: 'CoberturaPublisher', autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/coverage.xml', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false])
     }
     success{
-      sh '''(docker stop promise-bulter-dev-ci)&&(docker rm promise-bulter-dev-ci)'''
+      sh '''(docker stop promise-butler-dev-ci)&&(docker rm promise-butler-dev-ci)'''
     }
   }
 }

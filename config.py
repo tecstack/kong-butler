@@ -4,7 +4,7 @@
 # Author: daisheng
 # Email: shawntai.ds@gmail.com
 #
-# This is the config file of global package of promise-bulter.
+# This is the config file of global package of promise-butler.
 # You can create your own instance/config.py which will cover this file.
 # Also instance/nosetests_config.py has higher priority when testing.
 #
@@ -34,7 +34,7 @@ DEFAULT_LOGLEVEL = logging.DEBUG
 """
 # database access string setting, by default we use mysql
 # for common using
-SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/bulter'
+SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/butler'
 SQLALCHEMY_POOL_RECYCLE = 5
 PROPAGATE_EXCEPTIONS = True
 
