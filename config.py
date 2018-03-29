@@ -34,8 +34,9 @@ DEFAULT_LOGLEVEL = logging.DEBUG
 """
 # database access string setting, by default we use mysql
 # for common using
-SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/common'
+SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/bulter'
 SQLALCHEMY_POOL_RECYCLE = 5
 PROPAGATE_EXCEPTIONS = True
 
-KONG_ADMIN_URL = 'http://192.168.182.82:8001'
+KONGADM_URL = 'http://192.168.182.82:8000/kongadm'
+KONGADM_APIKEY = 'KhAbwsKycVvR5sUK3TV4bSkT2ekcpjna'

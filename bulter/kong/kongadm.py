@@ -6,6 +6,9 @@
 
 import utils
 from client import Client
+from baseinf import *
 from exceptions import *
+from .. import app
+
 
 logger = utils.logger

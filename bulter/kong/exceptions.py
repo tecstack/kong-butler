@@ -41,6 +41,10 @@ class BadRequestError(KongError):
     pass
 
 
+class ForbiddenError(KongError):
+    pass
+
+
 class RateLimitExceededError(KongError):
     pass
 
@@ -68,7 +72,7 @@ class UnsupportedMediaTypeError(KongError):
 error_codes = {
     400: BadRequestError,
     401: AuthenticationError,
-    403: AuthenticationError,
+    403: ForbiddenError,
     404: ResourceNotFoundError,
     405: MethodNotAllowedError,
     409: ConflictError,

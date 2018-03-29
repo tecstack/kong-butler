@@ -18,7 +18,7 @@ def gen_uuid(seq=None):
         generate a 32Byte uuid code
     """
     if seq is not None:
-        return uuid.uuid1().hex + uuid.uuid3(uuid.NAMESPACE_DNS, seq + uuid.uuid1().hex).hex
+        return uuid.uuid1().hex + uuid.uuid3(uuid.NAMESPACE_DNS, seq).hex
     return uuid.uuid1().hex + uuid.uuid3(
         uuid.NAMESPACE_DNS, uuid.uuid1().hex).hex
 
@@ -41,25 +41,15 @@ handler.setLevel(app.config['DEFAULT_LOGLEVEL'])
 
 
 def logmsg(msg):
-    """
-        to format the log message: add remote ip and target url
-        add other info if u need more
-    """
-    try:
-        logmsg = msg + '[from ' + request.remote_addr + \
-            ' to ' + request.url + ']'
-    except:
-        logmsg = msg
-    return logmsg
+    return '[url:%s]%s' % (request.url, msg)
 
 
 def logmsg_req(msg, url, method, status_code, resp_data):
     return logmsg('%s(%s[%s]%d:%s)' % (msg, url, method, status_code, resp_data))
 
+
 """
-    Exception: 2 basic custom Exception classes,
-    1. api calling exception, means exterior error(client exception)
-    2. module calling exception, means internal error(server exception)
+    exceptions
 """
 
 
@@ -134,69 +124,39 @@ def handle_invalid_api_usage(error):
     return response
 
 
-class InvalidAPIUsage(ClientError):
+class BadRequestError(ClientError):
+    status_code = 400
+    message = 'Bad request.'
+
+
+class AuthenticationError(ClientError):
     status_code = 401
     message = 'Client unauthorized.'
 
 
-"""
-    Here is some useful custom exception class below
-"""
-
-
-class ClientUnauthError(ClientError):
-    status_code = 401
-    message = 'Client unauthorized.'
-
-
-class ClientUnprocEntError(ClientError):
-    status_code = 422
-    message = "Unprocessable Entity"
-
-
-class ClientNotFoundError(ClientError):
+class ResourceNotFoundError(ClientError):
     status_code = 404
     message = "Not Found"
 
 
-"""
-    files
-"""
-import os
-import shutil
+class MethodNotAllowedError(ClientError):
+    status_code = 405
+    message = 'method not allowed'
 
 
-# create a folder if not exists and return
-def get_folder(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    return folder
+class ConflictError(ClientError):
+    status_code = 409
+    message = 'resource conflicted'
 
 
-# remove a folder if exists
-def remove_folder(folder):
-    if os.path.exists(folder):
-        shutil.rmtree(folder)
-        return True
-    return False
+class InternalServerError(ServerError):
+    status_code = 500
+    message = 'internal server error'
 
 
-# copy file
-def copy_file(src_file, dest_file):
-    if os.path.isfile(src_file):
-        dirname = os.path.dirname(dest_file)
-        dirname = dirname if dirname else '.'
-        get_folder(dirname)
-        shutil.copy(src_file, dest_file)
-        return True
-    return False
-
-
-# check validity of a file
-def allowed_file(filename, extension):
-    extension = extension if extension else []
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1] in extension
+class ServiceUnavailableError(ClientError):
+    status_code = 503
+    message = "Service Unavailable"
 
 
 """
@@ -243,11 +203,8 @@ def to_dict(inst, cls=None, except_clm_list=None, target_clm_list=None, ext_dict
 
 def _to_dict(inst, cls, except_clm_list=None, target_clm_list=None, ext_dict=None):
     """
-    Jsonify the sql alchemy query result.
+    Jsonify the sqlalchemy query result.
     """
-    # print cls.__mapper__.columns.__dict__['_data'].items()
-    # print cls.__mapper__.columns.__dict__['_data'].keys()
-    # target_columns = cls.__mapper__.columns.__dict__['_data'].keys()
     convert = dict()
     convert['DATETIME'] = datetime.datetime.isoformat
     # add your coversions for things like datetime's
@@ -257,7 +214,7 @@ def _to_dict(inst, cls, except_clm_list=None, target_clm_list=None, ext_dict=Non
         except_clm_list = []
     if target_clm_list is None:
         target_clm_list = []
-    # for c in cls.__table__.columns:
+
     for c in cls.__mapper__.columns:
         if len(target_clm_list) and c.name not in target_clm_list:
             continue

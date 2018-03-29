@@ -36,7 +36,7 @@ class Client(object):
         set credential of client to Authorization of kong admin
         :param base_url: kong admin base url
         :param apikey: apikey auth string
-        :param basic_auth: ['username'], ['password']
+        :param basic_auth: dict of 'username', 'password'
         """
         from . import __version__
         self.headers = {
