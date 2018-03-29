@@ -1,7 +1,7 @@
 # Promise-butler
 [![Build Status](http://192.168.181.1:8080/jenkins/buildStatus/icon?job=promise-butler/dev)](http://192.168.181.1:8080/jenkins/job/promise-butler/job/dev/)
 
-butler是promise的系统管理模块，包含权限与认证、用户管理、用户代办三个主要功能模块
+butler是基于Kong的用户管理模块，包含权限与认证、用户管理等主要功能模块
 
 ## 接口列表
 
