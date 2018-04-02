@@ -7,14 +7,14 @@
 
 from .. import db, app
 import utils
-from ..kong.baseinf import ApiInf as KongApiInf
+from ..kong.baseinf import ApiInf, GroupInf, ConsumerInf, JwtPluginInf, AclPluginInf
 from ..kong.client import Client as KongClient
+from ..kong.exceptions import KongError
 # from sqlalchemy import sql, and_
 
 import datetime
 
-KONGADM_URL = app.config['KONGADM_URL']
-KONGADM_APIKEY = app.config['KONGADM_APIKEY']
+logger = app.logger
 
 """
 This is a HELPER table for the role_table and user_table to set up
@@ -33,6 +33,10 @@ roles = db.Table(
         db.String(64),
         db.ForeignKey('user.user_id'))
 )
+
+group_inf = GroupInf()
+consumer_inf = ConsumerInf()
+api_inf = ApiInf()
 
 
 class User(db.Model):
@@ -55,8 +59,8 @@ class User(db.Model):
         backref=db.backref('roles', lazy='select'))
 
     def __init__(
-            self, username, hashed_password, role_list=None, enabled=True, tel=None, email=None):
-        self.user_id = utils.genUuid(username)
+            self, username, hashed_password, roles=None, enabled=True, tel=None, email=None):
+        self.user_id = utils.gen_uuid(username)
         self.username = username
         self.hashed_password = hashed_password
         self.enabled = enabled
@@ -64,9 +68,14 @@ class User(db.Model):
             self.tel = tel
         if email:
             self.email = email
-        if role_list:
-            self.roles = role_list
         self.sign_up_date = datetime.datetime.now()
+
+        consumer_inf.add(username)
+        if roles is not None:
+            self.roles = roles
+            for i in range(len(roles)):
+                roles[i] = roles[i].role_name
+            group_inf.add_consumers2groups([username], roles)
 
     def __repr__(self):
         return '<User %r>' % self.user_id
@@ -76,12 +85,10 @@ class User(db.Model):
         try:
             db.session.commit()
             msg = utils.logmsg('user saved<%s:%s>.' % (self.username, self.user_id))
-            app.logger.debug(msg)
             state = True
         except Exception, e:
             db.session.rollback()
-            msg = utils.logmsg(
-                'exception saving user<%s:%s>: %s.' % (self.username, self.user_id, e))
+            msg = utils.logmsg('exception: %s.' % e)
             app.logger.info(msg)
             state = False
         return [state, msg]
@@ -146,6 +153,12 @@ class User(db.Model):
             app.logger.error(utils.logmsg(msg))
             return [False, 'user update faild.']
         return [state, 'user updated.']
+
+    def delete(self):
+        self.roles = []
+        self.save()
+        db.session.delete(self)
+        db.session.commit()
 
 
 class Role(db.Model):
@@ -233,18 +246,50 @@ class Role(db.Model):
         role_dict = utils.to_dict(inst=self, ext_dict=ext_dict)
         return role_dict
 
+    def asso_kong_apis(self, api_ids):
+        for api_id in api_ids:
+            acl_inf = AclPluginInf(api_id)
+            acl_inf.set_acllist(whitelist=[self.role_name])
+
+    def asso_kong_consumers(self, users):
+        usernames = list()
+        for user in users:
+            usernames.append(user.username)
+        return group_inf.add_consumers2groups(usernames, [self.role_name])
+
+    def delete(self):
+        self.users = []
+        self.save()
+        db.session.delete(self)
+        db.session.commit()
+
 
 class Api(object):
     """docstring for Api"""
-    def __init__(self):
+    def __init__(self, api_id):
         super(Api, self).__init__()
-        self.kong_client = KongClient(KONGADM_URL, api_key=KONGADM_APIKEY, use_session=True)
-        self.kong_api_inf = KongApiInf(self.kong_client)
+        self.api_id = api_id
 
-    def list(self):
-        num, data = self.api_inf.list()
-        print data
+    @staticmethod
+    def get_list():
+        num, data = api_inf.list()
         return data
+
+    @classmethod
+    def get_api_ids(cls):
+        apis = cls.get_list()
+        for i in range(len(apis)):
+            apis[i] = apis[i]['id']
+        return apis
+
+    def api_info(self):
+        return api_inf.retrieve(api_id=self.api_id)
+
+    def add_roles(self, api_id, roles):
+        for i in range(len(roles)):
+            roles[i] = roles[i]['role_name']
+        acl_inf = AclPluginInf(api_id=self.api_id)
+        acl_inf.set_acllist(whitelist=roles)
 
 
 def init_user_data():
@@ -254,6 +299,7 @@ def init_user_data():
         role_root = Role.get_roles(role_name=app.config['DEFAULT_ROOT_USERNAME'])[0]
     except:
         role_root = Role(role_name='root', description='超级用户')
+    role_root.asso_kong_apis(Api.get_api_ids())
 
     try:
         user_root = User.get_users(username=app.config['DEFAULT_ROOT_USERNAME'])[0]
@@ -262,6 +308,9 @@ def init_user_data():
             username=app.config['DEFAULT_ROOT_USERNAME'],
             hashed_password=utils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']))
         user_root.save()
-    user_root.update(role_list=[role_root])
+
+    if not role_root.asso_kong_consumers([user_root]):
+        user_root.update(role_list=[role_root])
+        print 'asso kong consumer to roles error.'
 
     print 'User Data imported'

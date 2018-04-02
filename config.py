@@ -38,5 +38,15 @@ SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/butler'
 SQLALCHEMY_POOL_RECYCLE = 5
 PROPAGATE_EXCEPTIONS = True
 
-KONGADM_URL = 'http://192.168.182.82:8000/kongadm'
-KONGADM_APIKEY = 'KhAbwsKycVvR5sUK3TV4bSkT2ekcpjna'
+KONGADM_URL = 'http://testurl.com'
+KONGADM_APIKEY = 'your api key'
+
+DEFAULT_ROOT_USERNAME = 'admin'
+DEFAULT_ROOT_PASSWORD = 'admin'
+
+# encryption keys
+SECRET_KEY = 'your SECRET_KEY'
+# salt used by token generation
+AUTH_SALT = 'your AUTH SALT'
+# salt used by password md5 hash
+PSW_SALT = 'your PSW SALT'

@@ -2,6 +2,8 @@
 # !/usr/bin/env python
 
 from nose.tools import *
+from butler.user.models import init_user_data
+
 
 class Options(object):
     '''
@@ -13,3 +15,5 @@ class Options(object):
 
     def __getattr__(self, option):
         return None
+
+		

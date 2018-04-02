@@ -4,4 +4,6 @@ import os
 
 # for common using
 SQLALCHEMY_DATABASE_URI = 'mysql://root@192.168.182.52:3306/butler_devci'
-# SQLALCHEMY_POOL_RECYCLE = 3600
+
+KONGADM_URL = 'http://192.168.182.82:8001'
+KONGADM_APIKEY = 'KhAbwsKycVvR5sUK3TV4bSkT2ekcpjna'

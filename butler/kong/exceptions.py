@@ -4,6 +4,8 @@
 # Author: daisheng
 # Email: shawntai.ds@gmail.com
 
+from utils import logger
+
 
 class KongError(Exception):
 
@@ -11,6 +13,27 @@ class KongError(Exception):
         super(KongError, self).__init__(message)
         self.message = message
         self.context = context
+        logger.error('KongError:%s' % message)
+
+
+class KongAdmConnectionTimeoutError(KongError):
+    pass
+
+
+class KongAdmAuthFaildError(KongError):
+    pass
+
+
+class KongAdmPermissionError(KongError):
+    pass
+
+
+class KongAdmDBUnreachable(KongError):
+    pass
+
+
+class KongAdmUnkownConnError(KongError):
+    pass
 
 
 class ResourceNotFoundError(KongError):

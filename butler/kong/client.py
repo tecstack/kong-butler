@@ -5,12 +5,13 @@
 # Email: shawntai.ds@gmail.com
 
 import utils
-import requests
 import json
-import exceptions
+from exceptions import *
 
+from requests import Session, request
 from requests.auth import AuthBase
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import ReadTimeout
 
 logger = utils.logger
 
@@ -47,10 +48,26 @@ class Client(object):
         self.base_url = base_url
         self.auth = self._init_auth(apikey=apikey, basic_auth=basic_auth)
         if use_session:
-            self._session = requests.Session()
+            self._session = Session()
         else:
             self._session = None
         self.timeout = timeout
+
+    def chk_conn(self, status_path='status'):
+        try:
+            body = self.execute('GET', status_path)
+            db_reachable = body['database']['reachable']
+        except ReadTimeout as e:
+            raise KongAdmConnectionTimeoutError(e)
+        except AuthenticationError as e:
+            raise KongAdmAuthFaildError(e)
+        except ForbiddenError as e:
+            raise KongAdmPermissionError(e)
+        except Exceptions as e:
+            raise KongAdmUnkownConnError(e)
+        if not db_reachable:
+            raise KongAdmDBUnreachable('kong database unreachable.<url:%s>' % self.base_url)
+        return True
 
     def destroy(self):
         if self._session is not None:
@@ -98,7 +115,7 @@ class Client(object):
             logger.debug("  params: %s", req_params['data'])
 
         if self._session is None:
-            resp = requests.request(http_method, url, timeout=self.timeout, **req_params)
+            resp = request(http_method, url, timeout=self.timeout, **req_params)
         else:
             resp = self._session.request(
                 http_method, url, timeout=self.timeout, **req_params)
@@ -110,10 +127,10 @@ class Client(object):
         return self.parse_body(resp)
 
     def parse_body(self, resp):
-        if resp.status_code in exceptions.error_codes:
+        if resp.status_code in error_codes:
             message = 'kong response: %s, status_code:%d, url:%s, content:%s' % (
                 resp.request.method, resp.status_code, resp.url, resp.content)
-            raise exceptions.error_codes[resp.status_code](message)
+            raise error_codes[resp.status_code](message)
 
         if resp.content and resp.content.strip():
             try:

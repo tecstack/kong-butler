@@ -11,6 +11,7 @@ from flask import request, make_response, json
 import datetime
 import re
 import urllib3
+import md5
 
 
 def gen_uuid(seq=None):
@@ -41,7 +42,7 @@ handler.setLevel(app.config['DEFAULT_LOGLEVEL'])
 
 
 def logmsg(msg):
-    return '[url:%s]%s' % (request.url, msg)
+    return '%s' % msg
 
 
 def logmsg_req(msg, url, method, status_code, resp_data):
@@ -177,7 +178,8 @@ class Options(object):
 
 
 def to_dict(inst, cls=None, except_clm_list=None, target_clm_list=None, ext_dict=None):
-    if type(inst) is list:
+    if isinstance(inst, list):
+        print inst
         if not len(inst):
             return inst
         if cls is None:

@@ -4,12 +4,14 @@
 # Author: daisheng
 # Email: shawntai.ds@gmail.com
 
+
 import utils
 from client import Client
 from exceptions import *
 import jwt
 import datetime
 from jwt.exceptions import InvalidSignatureError
+from ..kong import _KONGADM_URL, _KONGADM_APIKEY, _KONGADM_BASICAUTH, _USE_SESSION
 
 TOKEN_EXPDURATION = 3600
 TOKEN_ALGORITHM = 'HS256'
@@ -17,9 +19,13 @@ TOKEN_ALGORITHM = 'HS256'
 logger = utils.logger
 
 
+client = Client(base_url=_KONGADM_URL, apikey=_KONGADM_APIKEY, basic_auth=_KONGADM_BASICAUTH,
+                use_session=_USE_SESSION)
+
+
 class NodeInf(object):
     """docstring for KongNode"""
-    def __init__(self, client):
+    def __init__(self, client=client):
         super(NodeInf, self).__init__()
         self._client = client
 
@@ -32,7 +38,7 @@ class NodeInf(object):
 
 class ConsumerInf(object):
     """docstring for Consumer"""
-    def __init__(self, client):
+    def __init__(self, client=client):
         super(ConsumerInf, self).__init__()
         self._client = client
 
@@ -42,7 +48,8 @@ class ConsumerInf(object):
         """
         consumer_id = self.retrieve(username)
         if consumer_id is not None:
-            raise UsernameDuplicateError('username<%s> duplicated.' % username)
+            # raise UsernameDuplicateError('username<%s> duplicated.' % username)
+            return consumer_id
 
         req_params = dict(username=username)
         if req_params:
@@ -92,7 +99,7 @@ class ConsumerInf(object):
 
 class ApiInf(object):
     """docstring for api"""
-    def __init__(self, client):
+    def __init__(self, client=client):
         super(ApiInf, self).__init__()
         self._client = client
 
@@ -118,7 +125,7 @@ class ApiInf(object):
 
 class PluginInf(object):
     """docstring for Plugin"""
-    def __init__(self, client):
+    def __init__(self, client=client):
         super(PluginInf, self).__init__()
         self._client = client
 
@@ -205,7 +212,7 @@ class PluginInf(object):
 
 class AclPluginInf(PluginInf):
     """docstring for AclPluginInf"""
-    def __init__(self, client, api_id):
+    def __init__(self, api_id, client=client):
         super(AclPluginInf, self).__init__(client)
         self._plugin_name = 'acl'
         self._api_id = api_id
@@ -271,17 +278,25 @@ class AclPluginInf(PluginInf):
 
 class GroupInf(object):
     """"""
-    def __init__(self, client):
+    def __init__(self, client=client):
         super(GroupInf, self).__init__()
         self._client = client
 
-    def add_consumers2groups(self, username_or_ids, groups):
-        for username_or_id in username_or_ids:
-            exist_groups = self.list(username_or_id)
+    def add_consumers2groups(self, username, groups, username_create=True):
+        for username in username:
+            try:
+                exist_groups = self.list(username)
+            except ResourceNotFoundError as e:
+                if not username_create:
+                    raise ResourceNotFoundError(e)
+                else:
+                    consumer_inf = ConsumerInf()
+                    consumer_inf.add(username)
+                    exist_groups = []
             for group in groups:
                 if group not in exist_groups:
                     req_params = dict(group=group)
-                    self._client.execute('POST', 'consumers/%s/acls' % username_or_id, req_params)
+                    self._client.execute('POST', 'consumers/%s/acls' % username, req_params)
         return True
 
     def del_consumers2groups(self, username_or_ids, groups):
@@ -314,7 +329,7 @@ class GroupInf(object):
 
 class JwtPluginInf(PluginInf):
     """docstring for JwtInf"""
-    def __init__(self, client, api_id):
+    def __init__(self, api_id, client=client):
         super(JwtPluginInf, self).__init__(client)
         self._plugin_name = 'jwt'
         self._api_id = api_id
@@ -350,7 +365,7 @@ class JwtPluginInf(PluginInf):
 
 class JwtCredInf(object):
     """docstring for TokenInf"""
-    def __init__(self, client, username_or_id, allow_duplicated=False):
+    def __init__(self, username_or_id, allow_duplicated=False, client=client):
         """
         :params: allow_duplicated: True or False
                     if not allow duplicated, it willnot create new cred when one or more creds
