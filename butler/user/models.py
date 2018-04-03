@@ -296,14 +296,15 @@ def init_user_data():
     # init user data: create all privileges and super user
 
     try:
-        role_root = Role.get_roles(role_name=app.config['DEFAULT_ROOT_USERNAME'])[0]
-    except:
+        role_root = Role.get_roles(role_name='root')[0]
+    except IndexError:
         role_root = Role(role_name='root', description='超级用户')
+        role_root.save()
     role_root.asso_kong_apis(Api.get_api_ids())
 
     try:
         user_root = User.get_users(username=app.config['DEFAULT_ROOT_USERNAME'])[0]
-    except:
+    except IndexError:
         user_root = User(
             username=app.config['DEFAULT_ROOT_USERNAME'],
             hashed_password=utils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']))
