@@ -25,7 +25,7 @@ docker exec promise-butler-dev-ci cp -r /apps/svr/promise-butler/env.conf/dev-ci
     stage('lib install') {
       steps {
         sh '''docker exec promise-butler-dev-ci pip install -r /apps/svr/promise-butler/requirements.txt
-        docker exec promise-butler-dev-ci /apps/svr/promise-butler/scripts/manager.py init_db
+        docker exec promise-butler-dev-ci /apps/svr/promise-butler/scripts/manager.py initdb
 docker exec promise-butler-dev-ci /apps/svr/promise-butler/scripts/manager.py import_data'''
       }
     }
