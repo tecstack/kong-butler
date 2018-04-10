@@ -24,8 +24,6 @@ class TestClient():
     # establish db
     def setUp(self):
         app.testing = True
-        # db.create_all()
-        # print 'Data imported'
 
         self.app = app.test_client()
 
@@ -47,19 +45,12 @@ class TestClient():
         """
         [KONG      ]butler.kong.client
         """
-        # test basic_auth client
-#        with patch('request', self.mock_resp()):
-#            basic_auth = dict(username='username', password='password')
-#            kong_client = Client('http://testip.com', basic_auth=basic_auth)
-#            data = kong_client.execute('GET', 'testpath/', None)
-#            kong_client.destroy()
-#            assert 'message' in data
         with patch.object(Session, 'request', self.mock_resp()):
             basic_auth = dict(username='username', password='password')
             kong_client = Client('http://testip.com', basic_auth=basic_auth, use_session=True)
             data = kong_client.execute('GET', 'testpath/', None)
             kong_client.destroy()
-            assert 'message' in data
+            assert 'message' in data#
 
     @with_setup(setUp, tearDown)
     def test_kong_baseinf_nodeinf(self):
@@ -116,6 +107,11 @@ class TestClient():
             ainf = ApiInf()
             data = ainf.retrieve('123')
             assert '123' in data['id']
+        content = dict(total=2, data=['123', '234'])
+        with patch.object(Session, 'request', self.mock_resp(content=content)):
+            ainf = ApiInf()
+            total, data = ainf.list()
+            assert '123' in data
 
     @with_setup(setUp, tearDown)
     def test_kong_baseinf_plugininf(self):
@@ -135,12 +131,11 @@ class TestClient():
             assert '123' in id
             data = pinf.update(plugin_id='123', api_name_or_id='123', plugin_name='acl')
             assert '123' in data['id']
-
         content = dict(total=1, data=['123'])
         with patch.object(Session, 'request', self.mock_resp(content=content)):
             pinf = PluginInf()
             num, data = pinf.list()
-            assert '123' in data
+            assert '123' in data#
 
     @with_setup(setUp, tearDown)
     def test_kong_baseinf_aclinf(self):
@@ -149,14 +144,14 @@ class TestClient():
         """
         content = dict(id='123')
         with patch.object(Session, 'request', self.mock_resp(content=content)):
-            aclinf = AclPluginInf('123')
-            data = aclinf.retrieve('123')
+            aclinf = AclPluginInf()
+            data = aclinf._retrieve('123')
             assert '123' in data['id']
         content = dict(total=1, data=[dict(id='123')])
         with patch.object(Session, 'request', self.mock_resp(content=content)):
-            data = aclinf.get_acllist()
+            data = aclinf.get_acllist('123')
             assert 'whitelist' in data
-            data = aclinf.set_acllist(whitelist=['123'], blacklist=['123'])
+            data = aclinf.set_acllist(api_id='123', whitelist=['123'], blacklist=['123'])
 
     @with_setup(setUp, tearDown)
     def test_kong_baseinf_jwtinf(self):

@@ -32,7 +32,7 @@ class KeyAuth(AuthBase):
 class Client(object):
     """docstring for client"""
 
-    def __init__(self, base_url, apikey=None, basic_auth=None, use_session=False, timeout=10):
+    def __init__(self, base_url, apikey=None, basic_auth=None, use_session=True, timeout=10):
         """
         set credential of client to Authorization of kong admin
         :param base_url: kong admin base url

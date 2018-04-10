@@ -7,7 +7,7 @@
 
 from .. import db, app
 import utils
-from ..kong.baseinf import ApiInf, GroupInf, ConsumerInf, JwtPluginInf, AclPluginInf
+from ..kong.kongadm import Consumer, Group, KongApi
 from ..kong.client import Client as KongClient
 from ..kong.exceptions import KongError
 # from sqlalchemy import sql, and_
@@ -34,10 +34,6 @@ roles = db.Table(
         db.ForeignKey('user.user_id'))
 )
 
-group_inf = GroupInf()
-consumer_inf = ConsumerInf()
-api_inf = ApiInf()
-
 
 class User(db.Model):
     """
@@ -53,34 +49,36 @@ class User(db.Model):
     tel = db.Column(db.String(32))
     email = db.Column(db.String(32))
     sign_up_date = db.Column(db.DATETIME)
+    consumer_id = db.Column(db.String(64))
     roles = db.relationship(
         'Role',
         secondary=roles,
         backref=db.backref('roles', lazy='select'))
 
     def __init__(
-            self, username, hashed_password, roles=None, enabled=True, tel=None, email=None):
+            self, username, password, roles=None, enabled=True, tel=None, email=None):
         self.user_id = utils.gen_uuid(username)
         self.username = username
-        self.hashed_password = hashed_password
+        self.hashed_password = utils.hash_pass(password)
         self.enabled = enabled
         if tel:
             self.tel = tel
         if email:
             self.email = email
         self.sign_up_date = datetime.datetime.now()
-
-        consumer_inf.add(username)
-        if roles is not None:
-            self.roles = roles
-            for i in range(len(roles)):
-                roles[i] = roles[i].role_name
-            group_inf.add_consumers2groups([username], roles)
+        self.consumer_id = Consumer(self.username).consumer_id
+        self.save()
 
     def __repr__(self):
         return '<User %r>' % self.user_id
 
     def save(self):
+        [state_kong, msg_kong] = self._save_to_kong()
+        [state_db, msg_db] = self._save_to_db()
+        return [state_kong and state_db, msg_kong + msg_db]
+
+    def _save_to_db(self):
+        self._save_to_kong()
         db.session.add(self)
         try:
             db.session.commit()
@@ -90,6 +88,20 @@ class User(db.Model):
             db.session.rollback()
             msg = utils.logmsg('exception: %s.' % e)
             app.logger.info(msg)
+            state = False
+        return [state, msg]
+
+    def _save_to_kong(self):
+        try:
+            con = Consumer.get(self.consumer_id)
+            con.username = self.username
+            con.groups = [role.role_name for role in self.roles]
+            msg = utils.logmsg(
+                'user name/groups save to kong.<%s:%s>' % (self.username, self.user_id))
+            state = True
+        except KongError as e:
+            msg = utils.logmsg('KongError: %s' % e)
+            app.logger.error(msg)
             state = False
         return [state, msg]
 
@@ -107,36 +119,28 @@ class User(db.Model):
 
     def get_dict_info(self):
         ext_dict = dict()
-        # ext_dict['privilege'] = utils.to_dict(inst=self.get_privs(), except_clm_list=['deleted'])
         ext_dict['role'] = utils.to_dict(inst=self.get_roles(), except_clm_list=['enabled'])
-        user_dict = utils.to_dict(inst=self, except_clm_list=['hashed_password'], ext_dict=ext_dict)
+        user_dict = utils.to_dict(
+            inst=self, except_clm_list=['hashed_password', 'consumer_id'], ext_dict=ext_dict)
         return user_dict
-
-#    def get_short_dict_info(self):
-#        ext_dict = dict()
-#        ext_dict['role'] = utils.to_dict(
-#            inst=self.get_roles(), target_clm_list=['role_id', 'role_name', 'description'])
-#        user_dict = utils.to_dict(
-#            inst=self, except_clm_list=['hashed_password', 'sign_up_date', 'last_login'],
-#            ext_dict=ext_dict)
-#        return user_dict
 
     def get_roles(self, only_enabled=True):
         roles = self.roles
-        tar_roles = list()
         if only_enabled:
             return roles
+        tar_roles = list()
         for role in roles:
             if role.enabled:
                 tar_roles.append(role)
         return tar_roles
 
-    def update(self, username=None, hashed_password=None, last_login=None, tel=None, email=None,
-               enabled=None, role_list=None):
+    def update(self, username=None, password=None, last_login=None, tel=None, email=None,
+               enabled=None, roles=None):
         if username is not None:
+            Consumer.get(self.consumer_id).username = username
             self.username = username
-        if hashed_password is not None:
-            self.hashed_password = hashed_password
+        if password is not None:
+            self.hashed_password = utils.hash_pass(password)
         if last_login is not None:
             self.last_login = last_login
         if tel is not None:
@@ -145,8 +149,9 @@ class User(db.Model):
             self.email = email
         if enabled is not None:
             self.enabled = enabled
-        if role_list is not None:
-            self.roles = role_list
+        if roles is not None:
+            Consumer.get(self.consumer_id).groups = [role.role_name for role in roles]
+            self.roles = roles
         app.logger.debug(utils.logmsg('user info update<%s:%s>' % (self.username, self.user_id)))
         [state, msg] = self.save()
         if not state:
@@ -179,15 +184,36 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % self.role_id
 
-    def __init__(self, role_name, description=None, users=None, privileges=None, enabled=True):
+    def __init__(self, role_name, description=None, users=None, enabled=True, api_ids=None):
         self.role_id = utils.gen_uuid(role_name)
         self.role_name = role_name
         self.description = description
         self.enabled = enabled
         if users is not None:
             self.users = users
+        if api_ids is not None:
+            self.api_ids = api_ids
 
     def save(self):
+        [state_kong, msg_kong] = self._save_to_kong()
+        [state_db, msg_db] = self._save_to_db()
+        return [state_kong and state_db, msg_kong + msg_db]
+
+    def _save_to_kong(self):
+        try:
+            group = Group(self.role_name)
+            users = self.users
+            group.usernames = [user.username for user in users]
+            msg = utils.logmsg(
+                'role usernames save to kong.<%s:%s>' % (self.role_name, self.role_id))
+            state = True
+        except KongError as e:
+            msg = utils.logmsg('KongError: %s' % e)
+            app.logger.error(msg)
+            state = False
+        return [state, msg]
+
+    def _save_to_db(self):
         db.session.add(self)
         try:
             db.session.commit()
@@ -202,15 +228,34 @@ class Role(db.Model):
             state = False
         return [state, msg]
 
-    def update(self, role_name=None, users=None, description=None, enabled=None):
-        if role_name is not None:
-            pass
+    def update(self, role_name=None, users=None, description=None, api_ids=None, enabled=None):
         if users is not None:
             self.users = users
         if description is not None:
             self.description = description
         if enabled is not None:
+            if self.enabled is False and enabled is True:
+                group = Group(self.role_name)
+                group.usernames = [user.username for user in self.users]
+                group.api_ids = self.api_ids
+            elif self.enabled is True and enabled is False:
+                group.delete()
             self.enabled = enabled
+        if api_ids is not None:
+            group = Group(self.role_name)
+            group.api_ids = api_ids
+        if role_name is not None:
+            if self.get_roles(role_name=role_name):
+                msg = 'role_name in used.<%s>' % role_name
+                app.logger.info(utils.logmsg(msg))
+                return [False, msg]
+            else:
+                Group(self.role_name).delete()
+                group = Group(role_name)
+                group.api_ids = self.api_ids
+                users = self.users
+                group.usernames = [user.username for user in users]
+                self.role_name = role_name
         app.logger.debug(utils.logmsg('role info update<%s:%s>.' % (self.role_name, self.role_id)))
         [state, msg] = self.save()
         if not state:
@@ -234,28 +279,23 @@ class Role(db.Model):
         users = self.users
         if not only_enabled:
             return users
-        tar_users = list()
-        for user in users:
-            if user.enabled:
-                tar_users.append(user)
-        return tar_users
+        return [user for user in users if user.enabled]
+
+    @property
+    def api_ids(self):
+        return Group(self.role_name).api_ids
+
+    @api_ids.setter
+    def api_ids(self, tar_api_ids):
+        if isinstance(tar_api_ids, list):
+            Group(self.role_name).api_ids = tar_api_ids
 
     def get_dict_info(self):
         ext_dict = dict()
+        ext_dict['api'] = Api.list()
         ext_dict['user'] = utils.to_dict(inst=self.get_users(), except_clm_list=['enabled'])
         role_dict = utils.to_dict(inst=self, ext_dict=ext_dict)
         return role_dict
-
-    def asso_kong_apis(self, api_ids):
-        for api_id in api_ids:
-            acl_inf = AclPluginInf(api_id)
-            acl_inf.set_acllist(whitelist=[self.role_name])
-
-    def asso_kong_consumers(self, users):
-        usernames = list()
-        for user in users:
-            usernames.append(user.username)
-        return group_inf.add_consumers2groups(usernames, [self.role_name])
 
     def delete(self):
         self.users = []
@@ -266,52 +306,66 @@ class Role(db.Model):
 
 class Api(object):
     """docstring for Api"""
+    def __new__(cls, api_id):
+        kongapi = KongApi(api_id)
+        if kongapi is None:
+            return None
+        api = super(Api, cls).__new__(cls)
+        api.kongapi = KongApi
+        api.api_id = api_id
+        return api
+
     def __init__(self, api_id):
         super(Api, self).__init__()
-        self.api_id = api_id
 
     @staticmethod
-    def get_list():
-        num, data = api_inf.list()
-        return data
+    def list():
+        return KongApi.list()
 
     @classmethod
-    def get_api_ids(cls):
-        apis = cls.get_list()
-        for i in range(len(apis)):
-            apis[i] = apis[i]['id']
-        return apis
+    def list_api_ids(cls):
+        apis = cls.list()
+        return [api['id'] for api in apis]
 
-    def api_info(self):
-        return api_inf.retrieve(api_id=self.api_id)
+    def get(api_id):
+        pass
 
-    def add_roles(self, api_id, roles):
-        for i in range(len(roles)):
-            roles[i] = roles[i]['role_name']
-        acl_inf = AclPluginInf(api_id=self.api_id)
-        acl_inf.set_acllist(whitelist=roles)
+    @staticmethod
+    def _chk_kong(api_id):
+        pass
+
+    @property
+    def info(self):
+        return self.kongapi.info
+
+    @property
+    def role_names(self):
+        return self.kongapi.whitelist
+
+    @role_names.setter
+    def role_names(self, tar_role_names):
+        if isinstance(tar_role_names, list):
+            self.kongapi.whitelist = tar_role_names
 
 
 def init_user_data():
     # init user data: create all privileges and super user
 
     try:
-        role_root = Role.get_roles(role_name='root')[0]
+        role_root = Role.get_roles(role_name=app.config['DEFAULT_ROOT_ROLENAME'])[0]
     except IndexError:
-        role_root = Role(role_name='root', description='超级用户')
+        role_root = Role(role_name=app.config['DEFAULT_ROOT_ROLENAME'], description='超级用户')
         role_root.save()
-    role_root.asso_kong_apis(Api.get_api_ids())
+    role_root.update(api_ids=Api.list_api_ids())
 
     try:
         user_root = User.get_users(username=app.config['DEFAULT_ROOT_USERNAME'])[0]
     except IndexError:
         user_root = User(
             username=app.config['DEFAULT_ROOT_USERNAME'],
-            hashed_password=utils.hash_pass(app.config['DEFAULT_ROOT_PASSWORD']))
+            password=app.config['DEFAULT_ROOT_PASSWORD'])
         user_root.save()
 
-    if not role_root.asso_kong_consumers([user_root]):
-        user_root.update(role_list=[role_root])
-        print 'asso kong consumer to roles error.'
+    user_root.update(roles=[role_root])
 
     print 'User Data imported'

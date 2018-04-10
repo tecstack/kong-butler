@@ -43,6 +43,7 @@ KONGADM_APIKEY = 'your api key'
 
 DEFAULT_ROOT_USERNAME = 'admin'
 DEFAULT_ROOT_PASSWORD = 'admin'
+DEFAULT_ROOT_ROLENAME = 'root'
 
 # encryption keys
 SECRET_KEY = 'your SECRET_KEY'

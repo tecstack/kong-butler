@@ -52,15 +52,11 @@ class ConsumerInf(object):
             return consumer_id
 
         req_params = dict(username=username)
-        if req_params:
-            resp = self._client.execute('POST', 'consumers', req_params)
-            try:
-                return resp['id']
-            except KeyError as e:
-                logger.error('create consumer faild: %s' % e)
-                return None
-        else:
-            logger.warning('need username or custom_id to create consumer.')
+        resp = self._client.execute('POST', 'consumers', req_params)
+        try:
+            return resp['id']
+        except KeyError as e:
+            logger.error('create consumer faild: %s' % e)
             return None
 
     def retrieve(self, username_or_id):
@@ -110,10 +106,7 @@ class ApiInf(object):
         """
         :return: api info
         """
-        try:
-            return self._client.execute('GET', 'apis/%s' % name_or_id)
-        except ResourceNotFoundError:
-            return None
+        return self._client.execute('GET', 'apis/%s' % name_or_id)
 
     def list(self):
         """
@@ -212,21 +205,20 @@ class PluginInf(object):
 
 class AclPluginInf(PluginInf):
     """docstring for AclPluginInf"""
-    def __init__(self, api_id, client=client):
+    def __init__(self, client=client):
         super(AclPluginInf, self).__init__(client)
         self._plugin_name = 'acl'
-        self._api_id = api_id
 
-    def _add(self, whitelist=None, blacklist=None):
+    def _add(self, api_id, whitelist=None, blacklist=None):
         config_params = dict()
         if whitelist is not None:
             config_params['whitelist'] = whitelist
         if blacklist is not None:
             config_params['blacklist'] = blacklist
         return super(AclPluginInf, self).add(
-            plugin_name=self._plugin_name, api_id=self._api_id, **config_params)
+            plugin_name=self._plugin_name, api_id=api_id, **config_params)
 
-    def _update(self, plugin_id, whitelist=None, blacklist=None):
+    def _update(self, api_id, plugin_id, whitelist=None, blacklist=None):
         config_params = dict()
         if whitelist is not None:
             config_params['whitelist'] = whitelist
@@ -234,21 +226,23 @@ class AclPluginInf(PluginInf):
             config_params['blacklist'] = blacklist
         return super(AclPluginInf, self).update(
             plugin_id=plugin_id,
-            api_name_or_id=self._api_id,
+            api_name_or_id=api_id,
             plugin_name=self._plugin_name,
             **config_params)
 
     def _retrieve(self, plugin_id):
         return super(AclPluginInf, self).retrieve(plugin_id)
 
-    def list(self):
-        return super(AclPluginInf, self).list(plugin_name=self._plugin_name, api_id=self._api_id)
+    def list(self, api_id=None):
+        if api_id is not None:
+            return super(AclPluginInf, self).list(plugin_name=self._plugin_name, api_id=api_id)
+        return super(AclPluginInf, self).list(plugin_name=self._plugin_name)
 
-    def set_acllist(self, whitelist=None, blacklist=None):
+    def set_acllist(self, api_id, whitelist=None, blacklist=None):
         """
         :params: add_whitelist, add_blacklist: list
         """
-        num, acl_plugins = self.list()
+        num, acl_plugins = self.list(api_id)
         acllist = dict()
         if whitelist is not None:
             acllist['whitelist'] = whitelist
@@ -258,10 +252,10 @@ class AclPluginInf(PluginInf):
             return self._add(**acllist)
         else:
             acl_plugin_id = acl_plugins[0]['id']
-            return self._update(acl_plugin_id, **acllist)
+            return self._update(api_id, acl_plugin_id, **acllist)
 
-    def get_acllist(self):
-        num, acl_plugins = self.list()
+    def get_acllist(self, api_id):
+        num, acl_plugins = self.list(api_id)
         if not num:
             return dict(whitelist=[], blacklist=[])
         else:
@@ -277,32 +271,40 @@ class AclPluginInf(PluginInf):
 
 
 class GroupInf(object):
-    """"""
+    """
+    group interface
+    """
     def __init__(self, client=client):
         super(GroupInf, self).__init__()
         self._client = client
 
-    def add_consumers2groups(self, username, groups, username_create=True):
-        for username in username:
-            try:
-                exist_groups = self.list(username)
-            except ResourceNotFoundError as e:
-                if not username_create:
-                    raise ResourceNotFoundError(e)
-                else:
-                    consumer_inf = ConsumerInf()
-                    consumer_inf.add(username)
-                    exist_groups = []
-            for group in groups:
-                if group not in exist_groups:
-                    req_params = dict(group=group)
-                    self._client.execute('POST', 'consumers/%s/acls' % username, req_params)
-        return True
+    def set_groups2consumer(self, username_or_id, groups):
+        """
+        set muti-groups to one consumer
+        """
+        exist_groups = self.list(username_or_id=username_or_id)
+        for group in exist_groups:
+            if group not in groups:
+                self.delete(username_or_id, group)
+        for group in groups:
+            if group not in exist_groups:
+                self.add(username_or_id, group)
 
-    def del_consumers2groups(self, username_or_ids, groups):
-        for username_or_id in username_or_ids:
-            for group in groups:
-                self._del(username_or_id, group)
+    def add(self, username_or_id, group):
+        """
+        add a new group to a consumer
+        """
+        req_params = dict(group=group)
+        self._client.execute('POST', 'consumers/%s/acls' % username_or_id, req_params)
+
+    def delete(self, username_or_id, group):
+        """
+        delete a existed group to a consumer
+        """
+        group_info = self.retrieve(username_or_id, group)
+        if group_info is not None:
+            return self._client.execute(
+                'DELETE', 'consumers/%s/acls/%s' % (username_or_id, group_info['id']))
 
     def retrieve(self, username_or_id, group):
         req_params = dict(group=group)
@@ -311,20 +313,23 @@ class GroupInf(object):
             return body['data'][0]
         return None
 
-    def list(self, username_or_id):
-        body = self._client.execute('GET', 'consumers/%s/acls' % username_or_id)
-        groups = list()
-        groups_info = body['data']
-        for group in groups_info:
-            groups.append(group['group'])
-        return groups
+    def list(self, username_or_id=None):
+        """
+        list all groups without duplicated
+        """
+        infos = self.list_groups2consumers(username_or_id)
+        groups = [info['group'] for info in infos]
+        return list(set(groups))
 
-    def _del(self, username_or_id, group):
-        group_info = self.retrieve(username_or_id, group)
-        if group_info is None:
-            return True
-        return self._client.execute(
-            'DELETE', 'consumers/%s/acls/%s' % (username_or_id, group_info['id']))
+    def list_groups2consumers(self, username_or_id=None):
+        """
+        list all relationships of group-consumer
+        """
+        if username_or_id is not None:
+            body = self._client.execute('GET', 'consumers/%s/acls' % username_or_id)
+        else:
+            body = self._client.execute('GET', 'acls')
+        return body['data']
 
 
 class JwtPluginInf(PluginInf):
@@ -334,11 +339,11 @@ class JwtPluginInf(PluginInf):
         self._plugin_name = 'jwt'
         self._api_id = api_id
 
-    def add(self, claims_to_verify=['exp', 'nbf'], run_on_preflight=False):
+    def add(self, api_id, claims_to_verify=['exp', 'nbf'], run_on_preflight=False):
         config_params['claims_to_verify'] = claims_to_verify
         config_params['run_on_preflight'] = run_on_preflight
         return super(JwtPluginInf, self).add(
-            plugin_name=self._plugin_name, api_id=self._api_id, **config_params)
+            plugin_name=self._plugin_name, api_id=api_id, **config_params)
 
     def update(self, plugin_id, claims_to_verify=None, run_on_preflight=None):
         config_params = dict()
