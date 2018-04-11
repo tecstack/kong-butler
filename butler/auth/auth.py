@@ -61,8 +61,8 @@ class TokenAPI(Resource):
         try:
             user = User.get_users(claims['username'])[0]
         except:
-            raise AuthenticationError('wrong username in token.')
-            app.logger.info(utils.logmsg(msg))
+            raise utils.AuthenticationError('wrong username in token.')
+            app.logger.info(utils.logmsg('wrong username in token.'))
         msg = 'user reflesh token.<user:%s>' % user.username
         response = {"message": msg,
                     "token": get_token(user),

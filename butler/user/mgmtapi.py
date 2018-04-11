@@ -11,7 +11,7 @@ import utils
 from ..kong.exceptions import ResourceNotFoundError as KongResourceNotFoundError
 
 
-#class MyselfApi(object):
+# class MyselfApi(object):
 #    """docstring for MyselfApi"""
 #    def __init__(self):
 #        self.reqparse = reqparse.RequestParser()
