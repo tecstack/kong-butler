@@ -381,7 +381,8 @@ class JwtCredInf(object):
         self.username_or_id = username_or_id
         self.allow_duplicated = allow_duplicated
 
-    def add(self):
+    @property
+    def info(self):
         """
         :return: credential infomation
         """
@@ -391,7 +392,7 @@ class JwtCredInf(object):
             self._del_duplicated_jwt_cred()
             num, jwt_creds = self.list()
             if num:
-                return self.retrieve(jwt_creds[0]['id'])
+                return self.retrieve(jwt_creds[0])
             else:
                 return self._add_new()
 
@@ -409,7 +410,7 @@ class JwtCredInf(object):
             for jwt_cred in jwt_creds:
                 duplicated += 1
                 if duplicated > 0:
-                    self.delete(jwt_cred['id'])
+                    self._delete(jwt_cred['id'])
                     logger.info('delete duplicated jwt_cred_id: %s' % jwt_cred['id'])
 
     def list(self):
@@ -420,10 +421,16 @@ class JwtCredInf(object):
         body = self._client.execute('GET', 'consumers/%s/jwt' % self.username_or_id)
         return body['total'], body['data']
 
-    def retrieve(self, cred_id):
-        return self._client.execute('GET', 'consumers/%s/jwt/%s' % (self.username_or_id, cred_id))
+    def retrieve(self):
+        info = self.info
+        return self._client.execute(
+            'GET', 'consumers/%s/jwt/%s' % (self.username_or_id, info['id']))
 
-    def delete(self, cred_id):
+    def delete(self):
+        info = self.info
+        return self._delete(info['id'])
+
+    def _delete(self, cred_id):
         return self._client.execute(
             'DELETE', 'consumers/%s/jwt/%s' % (self.username_or_id, cred_id))
 

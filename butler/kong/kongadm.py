@@ -5,7 +5,7 @@
 # Email: shawntai.ds@gmail.com
 
 import utils
-from baseinf import GroupInf, ConsumerInf, ApiInf, AclPluginInf
+from baseinf import GroupInf, ConsumerInf, ApiInf, AclPluginInf, JwtCredInf
 from exceptions import *
 from .. import app
 
@@ -226,3 +226,23 @@ class KongApi(object):
     @whitelist.setter
     def whitelist(self, whitelist):
         return aclplugin_inf.set_acllist(self.id, whitelist)
+
+
+class JwtCred(object):
+    """docstring for JwtCred"""
+    def __init__(self, user):
+        super(JwtCred, self).__init__()
+        self._cred_inf = JwtCredInf(user.username)
+        self._user = user
+
+    @property
+    def token(self):
+        info = self._cred_inf.info
+        return self._cred_inf.token_gen(
+            key=info['key'],
+            secret=info['secret'],
+            username=self._user.username,
+            user_id=self._user.user_id)
+
+    def delete(self):
+        self._cred_inf.delete()

@@ -11,6 +11,124 @@ import utils
 from ..kong.exceptions import ResourceNotFoundError as KongResourceNotFoundError
 
 
+#class MyselfApi(object):
+#    """docstring for MyselfApi"""
+#    def __init__(self):
+#        self.reqparse = reqparse.RequestParser()
+#        super(UserAPI, self).__init__()#
+
+#    """
+#    use token to authentification, return user info
+#    """
+#    def get(self):
+#        token = self.argCheckForGet()
+#        # verify the token
+#        [user_id, username, priv_name_list, become_users, msg] = \
+#            AuthMethods.tokenAuth(token)
+#        if not user_id:
+#            app.logger.info(utils.logmsg(msg))
+#            raise utils.InvalidAPIUsage(msg)
+#        users = User.get_users(user_id=user_id)
+#        if not users:
+#            msg = "cannot find user when autherization"
+#            app.logger.info(utils.logmsg(msg))
+#            raise utils.InvalidAPIUsage(msg)
+#        # we don't tell too much so rewrite the message
+#        user = users[0]
+#        msg = "user logged in.<username:" + user.username + ">"
+#        response = {"message": msg,
+#                    "token": token,
+#                    "user_info": user.get_dict_info()}
+#        app.logger.debug(utils.logmsg(msg))
+#        return response, 200#
+
+#    def put(self):
+#        """
+#        modf token owner userinfo
+#        """
+#        [target_user, username, hashed_new_password, tel, email] = \
+#            self.argCheckForPut()
+#        # update user
+#        target_user.update(
+#            username=username, hashed_password=hashed_new_password,
+#            tel=tel, email=email)
+#        target_user.save()
+#        msg = 'current user info updated.'
+#        app.logger.info(msg)
+#        response = {"message": msg, "user_id": target_user.user_id}
+#        return response, 200#
+#
+
+#    def argCheckForGet(self):
+#        self.reqparse.add_argument(
+#            'token', type=str, location='headers',
+#            required=True, help='token must be string')
+#        args = self.reqparse.parse_args()
+#        token = args['token']
+#        return token#
+
+#    def argCheckForPut(self):
+#        # verify the token
+#        token = self.argCheckForGet()#
+
+#        [user_id, username, priv_name_list, become_users, msg] = \
+#            AuthMethods.tokenAuth(token)
+#        if not user_id:
+#            app.logger.info(utils.logmsg(msg))
+#            raise utils.ClientUnauthError(msg)
+#        try:
+#            target_user = User.get_users(user_id=user_id)[0]
+#        except:
+#            msg = "cannot find user when autherization"
+#            app.logger.info(utils.logmsg(msg))
+#            raise utils.InvalidAPIUsage(msg)#
+
+#        # check other argument
+#        self.reqparse.add_argument(
+#            'username', type=str, location='json',
+#            help='user name must be string')
+#        self.reqparse.add_argument(
+#            'origin_password', type=str, location='json',
+#            help='origin password must be string')
+#        self.reqparse.add_argument(
+#            'new_password', type=str, location='json',
+#            help='U can modify password only if the CORRECT origin_password is given.')
+#        self.reqparse.add_argument(
+#            'tel', type=str, location='json',
+#            help='tel must be str')
+#        self.reqparse.add_argument(
+#            'email', type=str, location='json',
+#            help='email must be str')#
+
+#        args = self.reqparse.parse_args()
+#        # required args check#
+
+#        origin_password = args['origin_password']
+#        new_password = args['new_password']
+#        if new_password is not None and not new_password == '':
+#            if origin_password is None or origin_password == '':
+#                raise utils.ClientUnprocEntError('u need the origin_password.')
+#            if not utils.hash_pass(origin_password) == target_user.hashed_password:
+#                raise utils.ClientUnprocEntError('wrong origin_password.')
+#            hashed_new_password = utils.hash_pass(new_password)
+#        else:
+#            hashed_new_password = None#
+
+#        tel = args['tel']
+#        email = args['email']#
+
+#        username = args['username']
+#        if username:
+#            users = User.get_users(username=username)
+#            if users:
+#                msg = 'user name is in used.'
+#                raise utils.InvalidAPIUsage(msg)
+#        elif username is '':
+#            msg = 'user name should not be empty string.'
+#            raise utils.InvalidAPIUsage(msg)
+#        return [target_user, username, hashed_new_password, tel, email]
+
+
 class UserAPI(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()

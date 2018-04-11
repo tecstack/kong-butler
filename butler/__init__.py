@@ -72,4 +72,4 @@ flask_cache_control.init_app(app)
 def hello_world():
     return 'Hello World!'
 
-import user
+import user, auth
