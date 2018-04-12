@@ -18,7 +18,6 @@ Python 2.7.8
 * 下载及安装一些必要的python包
 ```bash
 $ git clone git@github.com:tecstack/kong-butler.git
-
 $ cd kong-butler && pip install -r requirements.txt
 ```
 
