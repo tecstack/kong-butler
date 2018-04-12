@@ -57,12 +57,12 @@ class TokenAPI(Resource):
     def post(self):
         token = self._post_arg_check()
 
-        claims = get_claims(token)
+        user_id = JwtCred.get_user_id(token)
         try:
-            user = User.get_users(claims['username'])[0]
+            user = User.get_users(user_id=user_id)[0]
         except:
-            raise utils.AuthenticationError('wrong username in token.')
-            app.logger.info(utils.logmsg('wrong username in token.'))
+            raise utils.AuthenticationError('wrong user_id in token.')
+            app.logger.info(utils.logmsg('wrong user_id in token.'))
         msg = 'user reflesh token.<user:%s>' % user.username
         response = {"message": msg,
                     "token": get_token(user),
@@ -96,7 +96,3 @@ def login(username, password):
 
 def get_token(user):
     return JwtCred(user).token
-
-
-def get_claims(token):
-    return JwtCredInf.token_decode(token)

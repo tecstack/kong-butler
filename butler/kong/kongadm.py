@@ -246,3 +246,13 @@ class JwtCred(object):
 
     def delete(self):
         self._cred_inf.delete()
+
+    @staticmethod
+    def get_user_id(token):
+        claims = JwtCredInf.token_decode(token)
+        return claims['user_id']
+
+    @staticmethod
+    def get_username(token):
+        claims = JwtCredInf.token_decode(token)
+        return claims['user_name']

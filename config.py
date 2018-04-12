@@ -34,7 +34,7 @@ DEFAULT_LOGLEVEL = logging.DEBUG
 """
 # database access string setting, by default we use mysql
 # for common using
-SQLALCHEMY_DATABASE_URI = 'mysql://root@127.0.0.1:3306/butler'
+SQLALCHEMY_DATABASE_URI = 'mysql://name:pass@yourmysql/butler'
 SQLALCHEMY_POOL_RECYCLE = 5
 PROPAGATE_EXCEPTIONS = True
 
