@@ -249,7 +249,7 @@ class AclPluginInf(PluginInf):
         if blacklist is not None:
             acllist['blacklist'] = blacklist
         if not num:
-            return self._add(**acllist)
+            return self._add(api_id, **acllist)
         else:
             acl_plugin_id = acl_plugins[0]['id']
             return self._update(api_id, acl_plugin_id, **acllist)
