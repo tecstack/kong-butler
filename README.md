@@ -65,31 +65,31 @@ $ supervisord -c env.conf/supervisord.cnf
 ### content
 
 #### auth API
-* [auth/](/README.md#usertoken)
+* [auth/]
     * [POST: user login]
     * [POST: token refresh]
 
 #### current user API
-* [user/myself](/README.md#)
+* [user/myself]
     * [GET: get current user info]
     * [PUT: modf user_info of current user]
 
 #### user management API
-* [user/user](/docs/promise-back-api.user.md#useruser)
-    * [POST: add new user](/docs/promise-back-api.user.md#post-add-new-user)
-    * [GET: get infos of one user/all users](/docs/promise-back-api.user.md#get-get-infos-of-one-userall-users)
-    * [PUT: update user info](docs/promise-back-api.user.md#put-update-user-info)
-    * [DELETE: delete one user](docs/promise-back-api.user.md#delete-delete-one-user)
-* [user/role](/docs/promise-back-api.user.md#userrole)
-    * [POST: add new role](/docs/promise-back-api.user.md#post-add-new-role)
-    * [GET: get infos of one role/all roles](/docs/promise-back-api.user.md#get-get-infos-of-one-roleall-roles)
-    * [PUT: update role info](docs/promise-back-api.user.md#put-update-role-info)
-    * [DELETE: delete one role](docs/promise-back-api.user.md#delete-delete-one-role)
-* [user/privilege](/docs/promise-back-api.user.md#userprivilege)
-    * [GET: get infos of one privilege/all privileges](/docs/promise-back-api.user.md#get-get-infos-of-one-privilegeall-privileges)
-    * [PUT: update privilege info](/docs/promise-back-api.user.md#put-update-privilege-info)
-* [user/list](/docs/promise-back-api.user.md#userlist)
-    * [GET: get simply info of users](/docs/promise-back-api.user.md#get-get-simply-info-of-users)
+* [user/user]
+    * [POST: add new user]
+    * [GET: get infos of one user/all users]
+    * [PUT: update user info]
+    * [DELETE: delete one user]
+* [user/role]
+    * [POST: add new role]
+    * [GET: get infos of one role/all roles]
+    * [PUT: update role info]
+    * [DELETE: delete one role]
+* [user/privilege]
+    * [GET: get infos of one privilege/all privileges]
+    * [PUT: update privilege info]
+* [user/list]
+    * [GET: get simply info of users]
 
 
 API URL format: ```http://<ip:port>/api/<api version, like v0.0>/<uri>```
