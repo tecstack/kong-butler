@@ -154,13 +154,13 @@ class UserAPI(Resource):
         """
         add a new user
         """
-        [username, password, role_list, tel, email] = self._post_arg_check()
+        [username, password, roles, tel, email] = self._post_arg_check()
 
         # add the new user
         user = User(
             username=username,
             password=password,
-            roles=role_list,
+            roles=roles,
             tel=tel,
             email=email)
         user.save()
@@ -177,8 +177,8 @@ class UserAPI(Resource):
             'password', type=str, location='json',
             required=True, help='password must be string')
         self.reqparse.add_argument(
-            'role_id_list', type=list, location='json',
-            help='role id must be string list')
+            'role_ids', type=list, location='json',
+            help='role ids must be string list')
         self.reqparse.add_argument(
             'tel', type=str, location='json',
             help='tel must be str')
@@ -192,10 +192,10 @@ class UserAPI(Resource):
         tel = args['tel']
         email = args['email']
 
-        role_id_list = args['role_id_list']
-        if role_id_list:
+        role_ids = args['role_ids']
+        if role_ids:
             role_list = list()
-            for role_id in role_id_list:
+            for role_id in role_ids:
                 roles = Role.get_roles(role_id=role_id)
                 if not roles:
                     msg = 'invalid role id:%s' % role_id
@@ -211,7 +211,7 @@ class UserAPI(Resource):
             app.logger.debug(utils.logmsg(msg))
             raise utils.ResourceNotFoundError(msg)
 
-        return [username, password, role_list, tel, email]
+        return [username, password, roles, tel, email]
 
     def put(self):
         """
@@ -224,7 +224,7 @@ class UserAPI(Resource):
             username=username, password=password,
             roles=roles, tel=tel, email=email, enabled=enabled)
         target_user.save()
-        msg = 'user updated.<user:%s' % target_user.user_id
+        msg = 'user updated.<user:%s>' % target_user.user_id
         app.logger.info(msg)
         response = {"message": msg, "user_id": target_user.user_id}
         return response, 200
