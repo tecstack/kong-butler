@@ -1,4 +1,4 @@
-ansible==2.3.1
+ansible==4.2.0
 autopep8==1.1.1
 coverage==3.7.1
 Distutils2==1.0a4
